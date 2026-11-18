@@ -14,15 +14,11 @@
 #include <gui/modules/widget.h>
 #include <dialogs/dialogs.h>
 #include <storage/storage.h>
+#include "rfid_rodeo_h10301.h"
+#include "rfid_rodeo_scene.h"
 
-// ── Scene / View IDs ──────────────────────────────────────────────────────────
-
-typedef enum {
-    RfidRodeoSceneFileSelect = 0, // open the dialogs file browser
-    RfidRodeoSceneResult,         // show parsed credential + Proxmark command
-    RfidRodeoSceneSaved,          // confirmation after saving the command
-    RfidRodeoSceneCount,
-} RfidRodeoScene;
+// Scene ids (RfidRodeoScene*) come from RFID_RODEO_SCENE_LIST in
+// rfid_rodeo_scene.h. That list is the only source of truth.
 
 typedef enum {
     RfidRodeoViewWidget = 0, // shared widget for result + saved scenes
@@ -39,7 +35,7 @@ typedef enum {
 typedef enum {
     RfidRodeoParseOk = 0,       // H10301, 3-byte payload, command built
     RfidRodeoParseUnsupported,  // valid file, Key type != H10301
-    RfidRodeoParseBadFile,      // could not read file / fields
+    RfidRodeoParseBadFile,      // missing header, bad version, or Data length != 3
 } RfidRodeoParseStatus;
 
 #define RFID_RODEO_CMD_SIZE  96
@@ -76,9 +72,9 @@ typedef struct {
     FuriString* text;
 } RfidRodeoApp;
 
-// Implemented in rfid_rodeo_parse.c
+// Implemented in rfid_rodeo_parse.c. The frame function is declared by
+// rfid_rodeo_h10301.h (no Flipper types, so the host test can build it).
 RfidRodeoParseStatus rfid_rodeo_parse_file(RfidRodeoApp* app);
-uint32_t rfid_rodeo_h10301_frame(uint8_t fc, uint16_t cn);
 
 // Implemented in rfid_rodeo_scene.c
 const SceneManagerHandlers* rfid_rodeo_get_scene_handlers(void);

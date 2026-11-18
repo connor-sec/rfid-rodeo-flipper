@@ -3,9 +3,9 @@
 // RFID Rodeo - Flipper Zero external app.
 //
 // Reads a saved Flipper RFID dump (.rfid) on-device and outputs the equivalent
-// Proxmark3 clone command. Scope: HID H10301 (26-bit), the one firmware-verified
-// on-disk mapping. All other key types are reported as unsupported rather than
-// guessed.
+// Proxmark3 clone command. Scope: HID H10301 (26-bit), the one on-disk mapping
+// verified on Momentum firmware (mntm-012). All other key types are reported
+// as unsupported rather than guessed.
 //
 // Derived from RFID Rodeo by connor-sec (v1.4, AGPL-3.0):
 //   https://github.com/connor-sec/RFID_Rodeo

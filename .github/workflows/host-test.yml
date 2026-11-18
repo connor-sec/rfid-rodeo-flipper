@@ -1,0 +1,16 @@
+name: Host test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  h10301-frame:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run the H10301 frame test
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -o test_h10301 \
+            tests/test_h10301.c rfid_rodeo_h10301.c
+          ./test_h10301

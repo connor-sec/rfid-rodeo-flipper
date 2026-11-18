@@ -68,9 +68,10 @@ void rfid_rodeo_scene_result_on_enter(void* context) {
             t,
             "\e#Could not read file\e#\n"
             "File: %s\n\n"
-            "Not a valid Flipper RFID\n"
-            "key file, or the Data /\n"
-            "Key type field is missing.\n",
+            "Need a Flipper RFID key\n"
+            "header (Filetype and\n"
+            "Version: 1). H10301 Data\n"
+            "must be exactly 3 bytes.\n",
             app->key_name);
 
         widget_add_text_scroll_element(app->widget, 0, 0, 128, 52, furi_string_get_cstr(t));
