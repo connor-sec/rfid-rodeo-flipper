@@ -1,0 +1,16 @@
+App(
+    appid="rfid_rodeo",
+    name="RFID Rodeo",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="rfid_rodeo_app",
+    requires=[
+        "gui",
+        "storage",
+        "dialogs",
+    ],
+    stack_size=4 * 1024,
+    fap_category="Tools",
+    fap_icon="rfid_rodeo_10px.png",
+    fap_version="1.0",
+    fap_description="RFID Rodeo - reads a saved Flipper .rfid dump and outputs the Proxmark3 clone command (HID H10301). Derived from connor-sec/RFID_Rodeo (AGPL-3.0).",
+)
