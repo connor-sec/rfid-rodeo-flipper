@@ -8,6 +8,17 @@ App(
         "storage",
         "dialogs",
     ],
+    # Explicit list: fbt's default "*.c*" glob is recursive and would compile
+    # tests/test_h10301.c (a host binary with its own main) into the FAP.
+    sources=[
+        "rfid_rodeo.c",
+        "rfid_rodeo_parse.c",
+        "rfid_rodeo_h10301.c",
+        "rfid_rodeo_scene.c",
+        "scenes/rfid_rodeo_scene_file_select.c",
+        "scenes/rfid_rodeo_scene_result.c",
+        "scenes/rfid_rodeo_scene_saved.c",
+    ],
     stack_size=4 * 1024,
     fap_category="Tools",
     fap_icon="rfid_rodeo_10px.png",

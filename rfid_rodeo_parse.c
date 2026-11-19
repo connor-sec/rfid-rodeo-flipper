@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// RFID Rodeo - file parsing + HID H10301 Wiegand math.
+// RFID Rodeo - Flipper RFID key file parsing.
+// H10301 frame math lives in rfid_rodeo_h10301.c (host-testable).
 // Derived from RFID Rodeo by connor-sec (AGPL-3.0):
 //   https://github.com/connor-sec/RFID_Rodeo
 
@@ -8,32 +9,16 @@
 #include <flipper_format/flipper_format.h>
 #include <toolbox/path.h>
 
-// Count set bits
-static uint32_t rr_popcount(uint32_t x) {
-    uint32_t c = 0;
-    while(x) {
-        c += x & 1u;
-        x >>= 1;
-    }
-    return c;
-}
-
-// Build the 26-bit HID H10301 Wiegand frame.
-//   bit 0      : even parity over data bits 1-12  (FC[8] + top 4 bits of CN)
-//   bits 1-8   : facility code (8 bits, MSB first)
-//   bits 9-24  : card number   (16 bits, MSB first)
-//   bit 25     : odd parity over data bits 13-24  (bottom 12 bits of CN)
-// Packed MSB-first; printed as 7 hex nibbles (zero padded to 28 bits).
-uint32_t rfid_rodeo_h10301_frame(uint8_t fc, uint16_t cn) {
-    uint32_t even = (rr_popcount(fc) + rr_popcount((uint32_t)((cn >> 12) & 0xF))) & 1u;
-    uint32_t odd = (rr_popcount((uint32_t)(cn & 0xFFF)) & 1u) ^ 1u;
-    return ((uint32_t)even << 25) | ((uint32_t)fc << 17) | ((uint32_t)cn << 1) | odd;
-}
+// Momentum documentation/file_formats/LfRfidFileFormat.md (mntm-012).
+#define RFID_RODEO_FILETYPE "Flipper RFID key"
+#define RFID_RODEO_FILE_VERSION 1u
 
 RfidRodeoParseStatus rfid_rodeo_parse_file(RfidRodeoApp* app) {
     const char* path = furi_string_get_cstr(app->file_path);
 
-    // Remember the file name (without extension) for the save path / display.
+    // Basename without extension, for the result screen. The save file name
+    // is built from the full path so same-named keys in different folders
+    // do not collide (see rfid_rodeo_save_stem).
     FuriString* name = furi_string_alloc();
     path_extract_filename_no_ext(path, name);
     strncpy(app->key_name, furi_string_get_cstr(name), RFID_RODEO_NAME_SIZE - 1);
@@ -43,22 +28,36 @@ RfidRodeoParseStatus rfid_rodeo_parse_file(RfidRodeoApp* app) {
     RfidRodeoParseStatus status = RfidRodeoParseBadFile;
 
     FlipperFormat* ff = flipper_format_file_alloc(app->storage);
+    FuriString* filetype = furi_string_alloc();
     FuriString* key_type = furi_string_alloc();
 
     do {
         if(!flipper_format_file_open_existing(ff, path)) break;
+
+        // flipper_format_file_open_existing does not check the header.
+        uint32_t version = 0;
+        if(!flipper_format_read_header(ff, filetype, &version)) break;
+        if(furi_string_cmp_str(filetype, RFID_RODEO_FILETYPE) != 0) break;
+        if(version != RFID_RODEO_FILE_VERSION) break;
+
         if(!flipper_format_read_string(ff, "Key type", key_type)) break;
 
         strncpy(app->key_type, furi_string_get_cstr(key_type), RFID_RODEO_KEYT_SIZE - 1);
         app->key_type[RFID_RODEO_KEYT_SIZE - 1] = '\0';
 
         if(furi_string_cmp_str(key_type, "H10301") != 0) {
-            // Valid Flipper RFID file, but not the one firmware-verified format.
+            // Valid Flipper RFID key file, but not the format verified on Momentum.
             status = RfidRodeoParseUnsupported;
             break;
         }
 
-        // H10301 payload is exactly 3 bytes.
+        // read_hex fills `data_size` bytes and returns success even when the
+        // line has more values (flipper_format_stream_read_value_line only
+        // fails when the line is shorter). Count first and reject anything
+        // other than exactly 3 bytes instead of keeping a prefix.
+        uint32_t data_count = 0;
+        if(!flipper_format_get_value_count(ff, "Data", &data_count)) break;
+        if(data_count != 3) break;
         if(!flipper_format_read_hex(ff, "Data", app->data, 3)) break;
 
         app->fc = app->data[0];
@@ -76,6 +75,7 @@ RfidRodeoParseStatus rfid_rodeo_parse_file(RfidRodeoApp* app) {
     } while(false);
 
     furi_string_free(key_type);
+    furi_string_free(filetype);
     flipper_format_free(ff);
     return status;
 }

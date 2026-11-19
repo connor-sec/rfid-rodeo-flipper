@@ -22,6 +22,21 @@ void rfid_rodeo_scene_file_select_on_enter(void* context) {
 
     if(!selected) {
         // No file chosen -> exit the app.
+        //
+        // TODO(device, Momentum mntm-012): confirm cancel on first launch
+        // leaves the app, and does not sit on a blank screen. This was not
+        // built or run on a Flipper.
+        //
+        // On first launch, scene_manager_next_scene() runs this on_enter
+        // before view_dispatcher_run(). view_dispatcher_stop() posts
+        // FuriEventLoopFlagStop on the loop created in view_dispatcher_alloc()
+        // (applications/services/gui/view_dispatcher.c, furi/core/event_loop.c
+        // at tag mntm-012). furi_event_loop_run() waits with
+        // ulBitsToClearOnEntry = 0, so a stop posted before run stays pending
+        // and run() should return immediately. Bad USB's file-select scene
+        // uses the same stop-from-on_enter pattern. If a device test shows a
+        // blank screen, do not call stop until the dispatcher is running:
+        // skip view_dispatcher_run() when the first browser is cancelled.
         view_dispatcher_stop(app->view_dispatcher);
         return;
     }

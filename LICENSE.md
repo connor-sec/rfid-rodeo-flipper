@@ -1,5 +1,8 @@
 # License
 
+The full GNU Affero General Public License v3.0 text is in `LICENSE` (so the
+license is machine-detectable). This file is only the attribution note.
+
 RFID Rodeo (Flipper Zero app) is derived from RFID Rodeo by connor-sec:
 https://github.com/connor-sec/RFID_Rodeo (v1.4), which is licensed under the
 GNU Affero General Public License v3.0.
